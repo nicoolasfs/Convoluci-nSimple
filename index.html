@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redes neuronales</title>
+</head>
+<body>
+    <h1> Red Neuronal Convolucional</h1>
+    <canvas id="canvas"></canvas>
+    <canvas id="resulConvoluciones"></canvas>
+    <script type="text/javascript">
+
+        var image = new Image();
+        image.onload = imageLoaded
+        image.src = "pez.jpeg";
+
+        function imageLoaded(){
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+
+            canvas.width = image.width;
+            canvas.height = image.height;
+
+            ctx.drawImage(image, 0, 0, image.width, image.height);
+
+            blancoYNegro(canvas);
+
+            var resulConvoluciones = document.getElementById("resulConvoluciones");
+            convoluciones(canvas, resulConvoluciones);
+        }
+
+        function blancoYNegro(canvas){
+            var ctx = canvas.getContext("2d");
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            console.log (imageData);
+            var data = imageData.data;
+
+            for(var i = 0; i < data.length; i += 4){
+                var gris = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                data[i] = gris;
+                data[i + 1] = gris;
+                data[i + 2] = gris;
+                data[i + 3] = 255;
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function convoluciones(canvasOrigen, canvasDestino){
+            //Obtención de variables para trabajar
+            var ctxOrigen = canvasOrigen.getContext("2d");
+            var imageDataOrigen = ctxOrigen.getImageData(0, 0, canvasOrigen.width, canvasOrigen.height);
+            var dataOrigen = imageDataOrigen.data;
+
+            canvasDestino.width = canvasOrigen.width;
+            canvasDestino.height = canvasOrigen.height;
+
+            var ctxDestino = canvasDestino.getContext("2d");
+            var imageDataDestino = ctxDestino.getImageData(0, 0, canvasDestino.width, canvasDestino.height);
+            var dataDestino = imageDataDestino.data;
+
+            //Kernel regular bordes
+            // var kernel = [
+            //     [-1, -1, -1],
+            //     [-1, 8, -1],
+            //     [-1, -1, -1]
+            // ];
+            var sobelVertical = [
+                [1, 0, -1],
+                [2, 0, -2],
+                [1, 0, -1]
+            ];
+            var sobelHorizontal = [
+                [-1, -2, -1],
+                [0, 0, 0],
+                [1, 2, 1]
+            ];
+
+            //Recorrido de la imagen
+            for(var y = 1; y < canvasOrigen.height-1; y++){
+                for(var x = 1; x < canvasOrigen.width-1; x++){
+
+                    var idx = ((y * canvasOrigen.width) + x) * 4;
+
+                    var totalX = 0;
+                    var totalY = 0;
+
+                    for (var kernelY = 0 ; kernelY < 3; kernelY++){
+                        for (var kernelX = 0 ; kernelX < 3; kernelX++){
+
+                            totalY += sobelVertical[kernelY][kernelX] * 
+                                dataOrigen[((((y + (kernelY-1)) * canvasOrigen.width) + (x + (kernelX-1))) * 4)];
+
+                            totalX += sobelHorizontal[kernelY][kernelX] * 
+                                dataOrigen[((((y + (kernelY-1)) * canvasOrigen.width) + (x + (kernelX-1))) * 4)];
+                        }
+                    }
+
+                    //Convolución con sobel vertical
+
+                    // var casillaY1 = sobelVertical[0][0] * dataOrigen[((((y-1) * canvasOrigen.width) + (x-1)) * 4)];
+                    // var casillaY2 = sobelVertical[0][1] * dataOrigen[((((y-1) * canvasOrigen.width) + (x)) * 4)];
+                    // var casillaY3 = sobelVertical[0][2] * dataOrigen[((((y-1) * canvasOrigen.width) + (x+1)) * 4)];
+                    // var casillaY4 = sobelVertical[1][0] * dataOrigen[((((y) * canvasOrigen.width) + (x-1)) * 4)];
+                    // var casillaY5 = sobelVertical[1][1] * dataOrigen[((((y) * canvasOrigen.width) + (x)) * 4)];
+                    // var casillaY6 = sobelVertical[1][2] * dataOrigen[((((y) * canvasOrigen.width) + (x+1)) * 4)];
+                    // var casillaY7 = sobelVertical[2][0] * dataOrigen[((((y+1) * canvasOrigen.width) + (x-1)) * 4)];
+                    // var casillaY8 = sobelVertical[2][1] * dataOrigen[((((y+1) * canvasOrigen.width) + (x)) * 4)];
+                    // var casillaY9 = sobelVertical[2][2] * dataOrigen[((((y+1) * canvasOrigen.width) + (x+1)) * 4)];
+
+                    // var sumaY = casillaY1 + casillaY2 + casillaY3 + casillaY4 + casillaY5 + casillaY6 + casillaY7 + casillaY8 + casillaY9;
+                    
+                    // //Convolución con sobel horizontal
+                    // var casillaX1 = sobelHorizontal[0][0] * dataOrigen[((((y-1) * canvasOrigen.width) + (x-1)) * 4)];
+                    // var casillaX2 = sobelHorizontal[0][1] * dataOrigen[((((y-1) * canvasOrigen.width) + (x)) * 4)];
+                    // var casillaX3 = sobelHorizontal[0][2] * dataOrigen[((((y-1) * canvasOrigen.width) + (x+1)) * 4)];
+                    // var casillaX4 = sobelHorizontal[1][0] * dataOrigen[((((y) * canvasOrigen.width) + (x-1)) * 4)];
+                    // var casillaX5 = sobelHorizontal[1][1] * dataOrigen[((((y) * canvasOrigen.width) + (x)) * 4)];
+                    // var casillaX6 = sobelHorizontal[1][2] * dataOrigen[((((y) * canvasOrigen.width) + (x+1)) * 4)];
+                    // var casillaX7 = sobelHorizontal[2][0] * dataOrigen[((((y+1) * canvasOrigen.width) + (x-1)) * 4)];
+                    // var casillaX8 = sobelHorizontal[2][1] * dataOrigen[((((y+1) * canvasOrigen.width) + (x)) * 4)];
+                    // var casillaX9 = sobelHorizontal[2][2] * dataOrigen[((((y+1) * canvasOrigen.width) + (x+1)) * 4)];
+
+                    // var sumaX = casillaX1 + casillaX2 + casillaX3 + casillaX4 + casillaX5 + casillaX6 + casillaX7 + casillaX8 + casillaX9;
+
+                    var magnitud = Math.sqrt((totalX * totalX) + (totalY * totalY));
+
+                    magnitud = (magnitud < 100 ) ? 0 : magnitud;
+
+                    dataDestino[idx] = magnitud;
+                    dataDestino[idx + 1] = magnitud;
+                    dataDestino[idx + 2] = magnitud;
+                    dataDestino[idx + 3] = 255;
+
+                    //Kernel regular bordes
+                    // var casilla1 = kernel[0][0] * dataOrigen[((((y-1) * canvasOrigen.width) + (x-1)) * 4)];
+                    // var casilla2 = kernel[0][1] * dataOrigen[((((y-1) * canvasOrigen.width) + (x)) * 4)];
+                    // var casilla3 = kernel[0][2] * dataOrigen[((((y-1) * canvasOrigen.width) + (x+1)) * 4)];
+                    // var casilla4 = kernel[1][0] * dataOrigen[((((y) * canvasOrigen.width) + (x-1)) * 4)];
+                    // var casilla5 = kernel[1][1] * dataOrigen[((((y) * canvasOrigen.width) + (x)) * 4)];
+                    // var casilla6 = kernel[1][2] * dataOrigen[((((y) * canvasOrigen.width) + (x+1)) * 4)];
+                    // var casilla7 = kernel[2][0] * dataOrigen[((((y+1) * canvasOrigen.width) + (x-1)) * 4)];
+                    // var casilla8 = kernel[2][1] * dataOrigen[((((y+1) * canvasOrigen.width) + (x)) * 4)];
+                    // var casilla9 = kernel[2][2] * dataOrigen[((((y+1) * canvasOrigen.width) + (x+1)) * 4)];
+
+                    // var suma = casilla1 + casilla2 + casilla3 + casilla4 + casilla5 + casilla6 + casilla7 + casilla8 + casilla9;
+
+                    // dataDestino[idx] = suma;
+                    // dataDestino[idx + 1] = suma;
+                    // dataDestino[idx + 2] = suma;
+                    // dataDestino[idx + 3] = 255;
+
+                    // dataDestino[idx] = dataOrigen[idx];
+                    // dataDestino[idx + 1] = dataOrigen[idx + 1];
+                    // dataDestino[idx + 2] = dataOrigen[idx + 2];
+                    // dataDestino[idx + 3] = dataOrigen[idx + 3];
+                }
+            }
+
+            ctxDestino.putImageData(imageDataDestino, 0, 0);
+        }
+
+    </script>
+
+</body>
+</html>
